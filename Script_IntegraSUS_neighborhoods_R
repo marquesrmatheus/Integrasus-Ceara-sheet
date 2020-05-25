@@ -24,7 +24,7 @@ library(lubridate)
 library(writexl)
 library(tidyr)
 
-#download da versão mais recente da planilha
+#download of the newest version of IntegraSUS sheet
 link <- 'https://indicadores.integrasus.saude.ce.gov.br/api/casos-coronavirus/export-csv'
 
 download.file(link,"casos_coronavirus.csv",dir=getwd())
@@ -38,7 +38,7 @@ dados <- read.csv(planilha,sep = ",",stringsAsFactors = FALSE)
 #' selecting unavailable characters to remove it from columns BAIRROPACIENTE
 sel <- c("","?","???","0","00","1","00","1","???","????","-","--","000000","----","104","1300","1847","1928","198","205","271","540","60181715","60192330","60337252","60830035","99628-4596")
 
-#'criando uma tabela com as únicas colunas e linhas desejadas para o estudo da covid-19 nos bairros de Fortaleza
+#'creating a table with only columns and rows to COVID-19 analysis in neighborhoods from city
 dados <- read.csv(planilha,sep = ",",stringsAsFactors = FALSE) %>% # reading data
   select(BAIRROPACIENTE,DATAINICIOSINTOMAS,DATACOLETAEXAME,DATASOLICITACAOEXAME,DATARESULTADOEXAME,MUNICIPIOPACIENTE,RESULTADOFINALEXAME) %>% # selecting columns to work
   filter(MUNICIPIOPACIENTE=="CAMOCIM" & # selecting rows to work
