@@ -1,0 +1,68 @@
+###
+#' title: Working with integrasus table from Ceara state, Brazil
+#' author: José Matheus da Rocha Marques
+#' date: 25/05/2020
+
+#remove all layers and classes in R
+rm(list=ls())
+
+# set directory
+setwd()
+getwd()
+
+#load the packages
+library(readr)
+library(readxl)
+library(dplyr)
+library(animation)
+library(gganimate)
+library(ggplot2)
+library(ggimage)
+library(devtools)
+library(data.table)
+library(lubridate)
+library(writexl)
+library(tidyr)
+
+#download da versão mais recente da planilha
+link <- 'https://indicadores.integrasus.saude.ce.gov.br/api/casos-coronavirus/export-csv'
+
+download.file(link,"casos_coronavirus.csv",dir=getwd())
+
+#'loading the csv file
+planilha <- 'casos_coronavirus.csv'
+
+#'Read data sheet
+dados <- read.csv(planilha,sep = ",",stringsAsFactors = FALSE)
+
+#' selecting unavailable characters to remove it from columns BAIRROPACIENTE
+sel <- c("","?","???","0","00","1","00","1","???","????","-","--","000000","----","104","1300","1847","1928","198","205","271","540","60181715","60192330","60337252","60830035","99628-4596")
+
+#'criando uma tabela com as únicas colunas e linhas desejadas para o estudo da covid-19 nos bairros de Fortaleza
+dados <- read.csv(planilha,sep = ",",stringsAsFactors = FALSE) %>% # reading data
+  select(BAIRROPACIENTE,DATAINICIOSINTOMAS,DATACOLETAEXAME,DATASOLICITACAOEXAME,DATARESULTADOEXAME,MUNICIPIOPACIENTE,RESULTADOFINALEXAME) %>% # selecting columns to work
+  filter(MUNICIPIOPACIENTE=="CAMOCIM" & # selecting rows to work
+         ! BAIRROPACIENTE %in% sel &
+           RESULTADOFINALEXAME=="Positivo") %>% #selecting rows to work
+  mutate_at(vars(DATAINICIOSINTOMAS,DATACOLETAEXAME,DATASOLICITACAOEXAME,DATARESULTADOEXAME), as.Date, format="%Y-%m-%d") %>% # converting "character" class from date columns to "Date" class
+  mutate(casos_confirmados=1) %>% #create a new column named "casos_confirmados" with all values = 1
+  mutate(data_casos_confirmados=if_else(is.na(DATAINICIOSINTOMAS),DATACOLETAEXAME,DATAINICIOSINTOMAS)) # create a new column named "data_casos_confirmados" for to be filled  with dates using rules
+         
+
+#'Ordering the tables from dates columns
+dados_by_bairro_sintomas_columns <- dados[
+  with(dados, order(DATAINICIOSINTOMAS,BAIRROPACIENTE)),
+  ] %>% 
+  select(BAIRROPACIENTE,casos_confirmados,data_casos_confirmados)# %>% 
+  #mutate_at(vars(data_casos_confirmados),as.character) #convert to "character" class the column "data_casos_confirmados"
+
+#dados_by_bairro_sintomas_columns <- as.character.Date(dados_by_bairro_sintomas_columns$data_casos_confirmados)
+
+##create a new data.frame to get diary cases
+casos_covid_camocim <- data.frame(
+  BAIRRO=dados_by_bairro_sintomas_columns$BAIRROPACIENTE,
+  datas=dados_by_bairro_sintomas_columns$data_casos_confirmados,
+  data_casos_por_dia=0
+  )
+
+
