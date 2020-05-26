@@ -1,23 +1,21 @@
 ###
 #' title: Working with integrasus table from Ceara state, Brazil
-#' author: José Matheus da Rocha Marques
+#' aim: obtain diary analysis of confirmated cases from the coronavirus in Fortaleza city
+#' author: José Matheus da Rocha Marques (@marquesrmatheus)
 #' date: 25/05/2020
 
 #remove all layers and classes in R
 rm(list=ls())
 
 # set directory
-setwd()
+setwd("")
 getwd()
 
 #load the packages
 library(readr)
 library(readxl)
 library(dplyr)
-library(animation)
-library(gganimate)
 library(ggplot2)
-library(ggimage)
 library(devtools)
 library(data.table)
 library(lubridate)
@@ -32,16 +30,17 @@ download.file(link,"casos_coronavirus.csv",dir=getwd())
 #'loading the csv file
 planilha <- 'casos_coronavirus.csv'
 
-#'Read data sheet
+#'Read and view data sheet
 dados <- read.csv(planilha,sep = ",",stringsAsFactors = FALSE)
+View (dados)
 
 #' selecting unavailable characters to remove it from columns BAIRROPACIENTE
 sel <- c("","?","???","0","00","1","00","1","???","????","-","--","000000","----","104","1300","1847","1928","198","205","271","540","60181715","60192330","60337252","60830035","99628-4596")
 
-#'creating a table with only columns and rows to COVID-19 analysis in neighborhoods from city
+#'creating a table with columns and rows to COVID-19 analysis in neighborhoods from city
 dados <- read.csv(planilha,sep = ",",stringsAsFactors = FALSE) %>% # reading data
   select(BAIRROPACIENTE,DATAINICIOSINTOMAS,DATACOLETAEXAME,DATASOLICITACAOEXAME,DATARESULTADOEXAME,MUNICIPIOPACIENTE,RESULTADOFINALEXAME) %>% # selecting columns to work
-  filter(MUNICIPIOPACIENTE=="CAMOCIM" & # selecting rows to work
+  filter(MUNICIPIOPACIENTE=="FORTALEZA" & # selecting rows to work
          ! BAIRROPACIENTE %in% sel &
            RESULTADOFINALEXAME=="Positivo") %>% #selecting rows to work
   mutate_at(vars(DATAINICIOSINTOMAS,DATACOLETAEXAME,DATASOLICITACAOEXAME,DATARESULTADOEXAME), as.Date, format="%Y-%m-%d") %>% # converting "character" class from date columns to "Date" class
@@ -59,10 +58,51 @@ dados_by_bairro_sintomas_columns <- dados[
 #dados_by_bairro_sintomas_columns <- as.character.Date(dados_by_bairro_sintomas_columns$data_casos_confirmados)
 
 ##create a new data.frame to get diary cases
-casos_covid_camocim <- data.frame(
+casos_covid_fortaleza <- data.frame(
   BAIRRO=dados_by_bairro_sintomas_columns$BAIRROPACIENTE,
   datas=dados_by_bairro_sintomas_columns$data_casos_confirmados,
+  MUNICIPIO=dados_by_bairro_sintomas_columns$MUNICIPIOPACIENTE,
   data_casos_por_dia=0
   )
 
+casos_covid_fortaleza
 
+#creating a new df from "casos_covid_fortaleza" df, but putting a new columnm "data_casos_por_dia" to make diary analyses from new confirmed cases
+casos_covid_fortaleza_por_dia <- casos_covid_fortaleza %>%
+  group_by(BAIRRO,datas,MUNICIPIO) %>% #nova coluna para casos diários
+  summarise(data_casos_por_dia=n())
+
+casos_covid_fortaleza_por_dia
+
+#'Ordering columns by dates from columns "datas" and "BAIRRO" from df
+casos_covid_fortaleza_por_dia <- casos_covid_fortaleza_por_dia[
+  with(casos_covid_fortaleza_por_dia, order(datas,BAIRRO)),
+  ] %>% 
+  select(BAIRRO,datas,data_casos_por_dia,MUNICIPIO)
+
+casos_covid_fortaleza_por_dia
+#' with df above you have a df and columns summarised by confirmed cases by day.
+#'If you want to make a plot, run the below code using ggplot2 package
+#' creating a df by number of confirmated cases in Fortaleza city
+casos_covid_fortaleza_grafico <- casos_covid_fortaleza_por_dia %>% 
+  group_by(datas,MUNICIPIO) %>% 
+  summarise(casos_por_dia=n())
+
+diary.cases.coronavirus.fortaleza <- ggplot(casos_covid_fortaleza_grafico,aes(x=datas,y=casos_por_dia))+
+          geom_path(size=0.5)+
+          theme_bw()+
+          labs(x="Date",
+               y="Confirmed cases by day",
+               title = "Confirmed cases from the COVID-19 by day in Fortaleza city",
+               subtitle = "Authors: @yourname \n Source: https://integrasus.saude.ce.gov.br/     Update:XX/XX/20XX")+
+  geom_line(col="red",size=1)+ #chose the colour and size of line in plot
+  theme(plot.title=element_text(size=14, hjust=0, face="bold", colour="black", vjust=1))+ # plot title 
+  theme(plot.subtitle=element_text(size=11, hjust=0, face="italic", color="black"))
+  
+diary.cases.coronavirus.fortaleza
+
+#saving plot in getwd()
+ggsave("1_diary_cases_fortaleza_plot.jpeg",plot = diary.cases.coronavirus.fortaleza,dpi=200)
+
+#'export data.frame
+writexl::write_xlsx(casos_covid_fortaleza_por_dia,path = "tabela_casos_coronavirus_dia_XX_XX_20XX.xlsx",col_names = TRUE)
