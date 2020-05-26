@@ -2,7 +2,7 @@
 #' title: Working with integrasus table from Ceara state, Brazil
 #' aim: obtain daily analysis of confirmated cases from the coronavirus in Fortaleza city
 #' author: José Matheus da Rocha Marques (@marquesrmatheus)
-#' date: 25/05/2020
+#' last update: 25/05/2020
 
 #remove all layers and classes in R
 rm(list=ls())
