@@ -1,6 +1,6 @@
 ###
 #' title: Working with integrasus table from Ceara state, Brazil
-#' aim: obtain diary analysis of confirmated cases from the coronavirus in Fortaleza city
+#' aim: obtain daily analysis of confirmated cases from the coronavirus in Fortaleza city
 #' author: José Matheus da Rocha Marques (@marquesrmatheus)
 #' date: 25/05/2020
 
@@ -57,7 +57,7 @@ dados_by_bairro_sintomas_columns <- dados[
 
 #dados_by_bairro_sintomas_columns <- as.character.Date(dados_by_bairro_sintomas_columns$data_casos_confirmados)
 
-##create a new data.frame to get diary cases
+##create a new data.frame to get daily cases
 casos_covid_fortaleza <- data.frame(
   BAIRRO=dados_by_bairro_sintomas_columns$BAIRROPACIENTE,
   datas=dados_by_bairro_sintomas_columns$data_casos_confirmados,
@@ -67,7 +67,7 @@ casos_covid_fortaleza <- data.frame(
 
 casos_covid_fortaleza
 
-#creating a new df from "casos_covid_fortaleza" df, but putting a new columnm "data_casos_por_dia" to make diary analyses from new confirmed cases
+#creating a new df from "casos_covid_fortaleza" df, but putting a new columnm "data_casos_por_dia" to make daily analyses from new confirmed cases
 casos_covid_fortaleza_por_dia <- casos_covid_fortaleza %>%
   group_by(BAIRRO,datas,MUNICIPIO) %>% #nova coluna para casos diários
   summarise(data_casos_por_dia=n())
@@ -88,7 +88,7 @@ casos_covid_fortaleza_grafico <- casos_covid_fortaleza_por_dia %>%
   group_by(datas,MUNICIPIO) %>% 
   summarise(casos_por_dia=n())
 
-diary.cases.coronavirus.fortaleza <- ggplot(casos_covid_fortaleza_grafico,aes(x=datas,y=casos_por_dia))+
+daily.cases.coronavirus.fortaleza <- ggplot(casos_covid_fortaleza_grafico,aes(x=datas,y=casos_por_dia))+
           geom_path(size=0.5)+
           theme_bw()+
           labs(x="Date",
@@ -99,10 +99,10 @@ diary.cases.coronavirus.fortaleza <- ggplot(casos_covid_fortaleza_grafico,aes(x=
   theme(plot.title=element_text(size=14, hjust=0, face="bold", colour="black", vjust=1))+ # plot title 
   theme(plot.subtitle=element_text(size=11, hjust=0, face="italic", color="black"))
   
-diary.cases.coronavirus.fortaleza
+daily.cases.coronavirus.fortaleza
 
 #saving plot in getwd()
-ggsave("1_diary_cases_fortaleza_plot.jpeg",plot = diary.cases.coronavirus.fortaleza,dpi=200)
+ggsave("1_daily_cases_fortaleza_plot.jpeg",plot = diary.cases.coronavirus.fortaleza,dpi=200)
 
 #'export data.frame
 writexl::write_xlsx(casos_covid_fortaleza_por_dia,path = "tabela_casos_coronavirus_dia_XX_XX_20XX.xlsx",col_names = TRUE)
